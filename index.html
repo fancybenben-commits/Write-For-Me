@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Write It!">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#6c4cf1">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Write It! – Step-by-Step Writing Coach</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f6f4ff;--card:#fff;--ink:#1f1b3a;--mute:#6b6790;--pri:#6c4cf1;--pri2:#ece8ff;--ok:#1a9d63;--line:#ddd8f5}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15132a;--card:#201d3d;--ink:#f1efff;--mute:#a9a5d1;--pri:#8f78ff;--pri2:#2e2a5a;--ok:#4cd694;--line:#37336a}}
+:root[data-theme="dark"]{--bg:#15132a;--card:#201d3d;--ink:#f1efff;--mute:#a9a5d1;--pri:#8f78ff;--pri2:#2e2a5a;--ok:#4cd694;--line:#37336a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:640px;margin:0 auto;padding:16px 16px 90px}
+h1{font-size:24px;margin:4px 0 2px}h2{font-size:21px;margin:8px 0}
+.sub{color:var(--mute);margin:0 0 14px;font-size:15px}
+.prog{display:flex;gap:5px;margin:10px 0 16px}
+.prog i{flex:1;height:8px;border-radius:6px;background:var(--line)}
+.prog i.on{background:var(--pri)}.prog i.done{background:var(--ok)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.why{background:var(--pri2);border-radius:12px;padding:10px 12px;font-size:15px;margin-bottom:14px}
+label{display:block;font-weight:700;margin:12px 0 6px}
+.hint{font-size:14px;color:var(--mute);margin:-2px 0 6px}
+.hint b{color:var(--pri)}
+textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:2px solid var(--line);border-radius:12px;padding:10px;resize:vertical}
+textarea:focus{outline:none;border-color:var(--pri)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chip{border:1px solid var(--pri);background:transparent;color:var(--pri);border-radius:20px;padding:6px 11px;font:inherit;font-size:14px;cursor:pointer}
+.chip:active{background:var(--pri2)}
+.types{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.type{border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:12px;font:inherit;text-align:left;cursor:pointer}
+.type.sel{border-color:var(--pri);background:var(--pri2)}
+.type b{display:block;font-size:16px}.type span{font-size:13px;color:var(--mute)}
+.topic{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:10px 12px;margin:6px 0;font:inherit;cursor:pointer}
+.topic.sel{border:2px solid var(--pri);background:var(--pri2);font-weight:700}
+.nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px))}
+.nav div{max-width:640px;margin:0 auto;display:flex;gap:10px}
+.btn{flex:1;border:0;border-radius:12px;padding:13px;font:inherit;font-weight:700;cursor:pointer;background:var(--pri);color:#fff}
+.btn.ghost{background:var(--pri2);color:var(--pri)}.btn:disabled{opacity:.4}
+.check label{display:flex;gap:10px;font-weight:400;margin:8px 0;align-items:flex-start}
+.check input{width:22px;height:22px;margin-top:2px;accent-color:var(--pri)}
+.essay{white-space:pre-wrap;background:var(--bg);border-radius:12px;padding:12px;border:1px solid var(--line)}
+.wc{color:var(--mute);font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div class="nav"><div><button class="btn ghost" id="back">← Back</button><button class="btn" id="next">Next →</button></div></div>
+<script>
+var TYPES={
+ story:{n:"📖 Story",d:"Tell what happened",t:["A day I will never forget","A time I was brave","My funniest mistake","A time I learned something the hard way"]},
+ opinion:{n:"💬 Opinion",d:"Convince the reader",t:["Should students get less homework?","Should phones be allowed in school?","Dogs or cats: which is the better pet?","Should school start later in the morning?"]},
+ explain:{n:"💡 Explain",d:"Teach something",t:["How to do something I am good at","Why sleep matters","My favorite hobby and why I love it","Why friends are important"]},
+ describe:{n:"🎨 Describe",d:"Paint a picture with words",t:["My favorite place","Someone I admire","My dream room","The best meal I ever had"]}
+};
+var STEPS=[
+ {id:"topic",t:"Choose a topic"},
+ {t:"Brainstorm",why:"Good writers do not start with sentences. They start with ideas. Dump everything in your head here. Messy is fine!",
+  f:[{id:"b1",l:"What do I already know or feel about this topic?",r:3,s:["I think...","I remember when...","I feel ... because..."]},
+     {id:"b2",l:"List at least 3 things I could write about",r:4,s:["1. ","2. ","3. "]}]},
+ {t:"Make a plan",why:"A plan is like a map. Pick your best 3 ideas from the brainstorm. Each one becomes one paragraph.",
+  f:[{id:"main",l:"Main idea: what is my ONE big point in a sentence?",r:2,s:["I believe that...","The most important thing about ... is...","My ... taught me that..."]},
+     {id:"pt1",l:"Idea #1 for paragraph 1",r:2},{id:"pt2",l:"Idea #2 for paragraph 2",r:2},{id:"pt3",l:"Idea #3 for paragraph 3",r:2}]},
+ {t:"Write the beginning",why:"The introduction has 3 jobs: grab attention (hook), tell the topic, and share your main idea. 3 to 4 sentences is plenty.",
+  f:[{id:"intro",l:"Introduction",r:6,h:function(d){return d.main?"Your main idea: <b>"+esc(d.main)+"</b>":""},
+     s:["Imagine...","Have you ever wondered...","One day, I...","Did you know that...","In this essay, I will..."]}]},
+ {t:"Write the middle",why:"Use PEEL for every paragraph. P = Point (what is it about?), E = Example (a real detail), E = Explain (what does it show?), L = Link (tie back to your main idea).",
+  f:[{id:"p1",l:"Body paragraph 1",r:6,h:function(d){return d.pt1?"Your idea: <b>"+esc(d.pt1)+"</b>":""},s:["First,","For example,","For instance,","This shows that","This matters because"]},
+     {id:"p2",l:"Body paragraph 2",r:6,h:function(d){return d.pt2?"Your idea: <b>"+esc(d.pt2)+"</b>":""},s:["Another reason is","Also,","One time,","This is important because","As a result,"]},
+     {id:"p3",l:"Body paragraph 3",r:6,h:function(d){return d.pt3?"Your idea: <b>"+esc(d.pt3)+"</b>":""},s:["Finally,","Most of all,","For example,","This proves that","This is why"]}]},
+ {t:"Write the ending",why:"The conclusion wraps it up. Say your main idea again in new words, remind the reader of your 3 points, and end with a strong last thought.",
+  f:[{id:"concl",l:"Conclusion",r:5,s:["In conclusion,","All in all,","That is why I believe...","From now on, I will...","Next time you..."]}]},
+ {id:"final",t:"Check and finish"}
+];
+var S={step:0,type:"",topic:"",d:{},chk:{}};
+try{var sv=localStorage.getItem("writeit1");if(sv)S=Object.assign(S,JSON.parse(sv))}catch(e){}
+function save(){try{localStorage.setItem("writeit1",JSON.stringify(S))}catch(e){}}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+var CHECKS=["My introduction has a hook and my main idea","Each paragraph starts with a clear point","I gave an example in every paragraph","I explained WHY each example matters","My conclusion repeats my main idea in new words","Every sentence starts with a capital letter and ends with punctuation","I read it out loud and fixed parts that sounded weird","I checked spelling of words I was unsure about","I used linking words (first, also, because, finally)"];
+function essay(){var d=S.d;return [d.intro,d.p1,d.p2,d.p3,d.concl].filter(Boolean).join("\n\n")}
+function wc(t){var m=t.trim().match(/\S+/g);return m?m.length:0}
+function render(){
+ var a=document.getElementById("app"),st=STEPS[S.step],h="";
+ h+="<h1>✏️ Write It!</h1><p class='sub'>Step "+(S.step+1)+" of "+STEPS.length+": "+st.t+"</p><div class='prog'>";
+ for(var i=0;i<STEPS.length;i++)h+="<i class='"+(i<S.step?"done":i==S.step?"on":"")+"'></i>";
+ h+="</div>";
+ if(st.id=="topic"){
+  h+="<div class='card'><h2>What kind of writing?</h2><div class='types'>";
+  for(var k in TYPES)h+="<button class='type"+(S.type==k?" sel":"")+"' data-type='"+k+"'><b>"+TYPES[k].n+"</b><span>"+TYPES[k].d+"</span></button>";
+  h+="</div>";
+  if(S.type){h+="<label>Pick a topic (or write your own)</label>";
+   TYPES[S.type].t.forEach(function(t){h+="<button class='topic"+(S.topic==t?" sel":"")+"' data-topic='"+esc(t)+"'>"+esc(t)+"</button>"});
+   h+="<textarea id='own' rows='2' placeholder='Or type your own topic here...'>"+(TYPES[S.type].t.indexOf(S.topic)<0?esc(S.topic):"")+"</textarea>";}
+  h+="</div>";
+ }else if(st.id=="final"){
+  var e=essay();
+  h+="<div class='card'><h2>🔎 Revise like a pro</h2><div class='why'>Great writing is rewritten! Tick each box only when it is really true.</div><div class='check'>";
+  CHECKS.forEach(function(c,i){h+="<label><input type='checkbox' data-c='"+i+"'"+(S.chk[i]?" checked":"")+">"+c+"</label>"});
+  var n=Object.keys(S.chk).filter(function(k){return S.chk[k]}).length;
+  h+="</div><p class='wc'>"+n+" of "+CHECKS.length+" done"+(n==CHECKS.length?" 🎉 Amazing work!":"")+"</p></div>";
+  h+="<div class='card'><h2>📄 Your writing</h2><p class='wc'>Topic: "+esc(S.topic)+" · "+wc(e)+" words</p><div class='essay'>"+(e?esc(e):"Nothing yet. Go back and fill in the steps!")+"</div><p></p><button class='btn' id='copy'>Copy my writing</button></div>";
+ }else{
+  h+="<div class='why'>💡 "+st.why+"</div><div class='card'><p class='sub' style='margin:0'>Topic: <b>"+esc(S.topic)+"</b></p>";
+  st.f.forEach(function(f){
+   h+="<label for='"+f.id+"'>"+f.l+"</label>";
+   if(f.h){var x=f.h(S.d);if(x)h+="<div class='hint'>"+x+"</div>"}
+   if(f.s){h+="<div class='chips'>";f.s.forEach(function(s){h+="<button class='chip' data-f='"+f.id+"' data-s='"+esc(s)+"'>+ "+esc(s)+"</button>"});h+="</div>"}
+   h+="<textarea id='"+f.id+"' rows='"+f.r+"' placeholder='Type here...'>"+esc(S.d[f.id]||"")+"</textarea><div class='wc' id='wc_"+f.id+"'>"+wc(S.d[f.id]||"")+" words</div>";
+  });
+  h+="</div>";
+ }
+ a.innerHTML=h;
+ document.getElementById("back").disabled=S.step==0;
+ var nx=document.getElementById("next");nx.style.display=S.step==STEPS.length-1?"none":"";
+ nx.disabled=(st.id=="topic"&&!S.topic.trim());
+ window.scrollTo(0,0);
+}
+document.addEventListener("click",function(ev){
+ var t=ev.target.closest("button,input");if(!t)return;
+ if(t.dataset.type){S.type=t.dataset.type;S.topic="";save();render()}
+ else if(t.dataset.topic){S.topic=t.dataset.topic;save();render()}
+ else if(t.dataset.s){var ta=document.getElementById(t.dataset.f),sp=t.dataset.s;
+  ta.value+=(ta.value&&!/\s$/.test(ta.value)?" ":"")+sp+(/\n$/.test(sp)?"":" ");ta.focus();upd(ta)}
+ else if(t.id=="copy"){var e=essay();try{navigator.clipboard.writeText(e).then(function(){t.textContent="Copied! ✅"})}catch(x){t.textContent="Select the text above to copy"}}
+ else if(t.id=="next"){S.step++;save();render()}
+ else if(t.id=="back"){S.step--;save();render()}
+ else if(t.dataset.c!==undefined){S.chk[t.dataset.c]=t.checked;save();render()}
+});
+function upd(ta){
+ if(ta.id=="own"){S.topic=ta.value;document.getElementById("next").disabled=!S.topic.trim()}
+ else{S.d[ta.id]=ta.value;var w=document.getElementById("wc_"+ta.id);if(w)w.textContent=wc(ta.value)+" words"}
+ save();
+}
+document.addEventListener("input",function(ev){if(ev.target.tagName=="TEXTAREA")upd(ev.target)});
+render();
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
+</script>
+</body>
+</html>
